@@ -16,31 +16,29 @@ export default function AddTodoForm({ onAdd }: { onAdd: (title: string) => void 
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className={`flex gap-3 p-2 rounded-2xl dark-card transition-all duration-300 ${
-        focused 
-          ? 'border-indigo-500/50 shadow-lg shadow-indigo-500/10' 
-          : 'shadow-md shadow-black/20'
+      <div className={`flex items-center gap-3 bg-white rounded-xl px-4 py-1 transition-all duration-300 border ${
+        focused
+          ? 'border-violet-400 shadow-md shadow-violet-500/10'
+          : 'border-gray-200 shadow-sm'
       }`}>
-        <div className="flex-1 flex items-center pl-3">
-          <svg className="w-5 h-5 text-slate-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          <input
-            type="text"
-            value={title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            placeholder="What needs to be done?"
-            className="flex-1 py-2.5 bg-transparent text-sm text-slate-200 placeholder-slate-500 focus:outline-none"
-          />
-        </div>
+        <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <input
+          type="text"
+          value={title}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Add a new task..."
+          className="flex-1 py-3 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+        />
         <button
           type="submit"
           disabled={!title.trim()}
-          className="px-6 py-2.5 todo-gradient text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:shadow-none disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-[#1e2a45]"
+          className="px-5 py-2 bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:shadow-violet-500/25 active:scale-[0.98] disabled:opacity-40 disabled:hover:shadow-none disabled:hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2"
         >
-          Add Task
+          Add
         </button>
       </div>
     </form>
