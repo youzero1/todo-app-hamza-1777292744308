@@ -100,7 +100,8 @@ export default function TodoList() {
     if (usingLocal || !supabase) {
       let localImageUrl: string | null = null;
       if (file) {
-        localImageUrl = URL.createObjectURL(file);
+        // For local mode, convert file to data URL so it persists in localStorage
+        localImageUrl = await fileToDataUrl(file);
       }
       const newTodo: Todo = {
         id: localId(),
@@ -138,6 +139,16 @@ export default function TodoList() {
     }
 
     setTodos((prev) => [data as Todo, ...prev]);
+  }
+
+  /* ---------- file to data URL helper ---------- */
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   /* ---------- toggle ---------- */

@@ -13,6 +13,17 @@ export default function TodoItem({
   onDelete: (id: string) => void;
 }) {
   const [imageExpanded, setImageExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [expandedImgError, setExpandedImgError] = useState(false);
+
+  // Build a working image URL
+  // Supabase public URLs work as-is; blob: URLs from local mode also work.
+  // We add a cache-busting param to avoid stale browser cache for Supabase URLs.
+  const imageUrl = todo.image_url
+    ? todo.image_url.startsWith('blob:')
+      ? todo.image_url
+      : todo.image_url
+    : null;
 
   return (
     <li className="todo-item-enter bg-white rounded-xl group hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden">
@@ -47,7 +58,7 @@ export default function TodoItem({
           >
             {todo.title}
           </span>
-          {todo.image_url && (
+          {imageUrl && !imgError && (
             <button
               onClick={() => setImageExpanded(!imageExpanded)}
               className="mt-1 text-xs text-violet-500 hover:text-violet-600 flex items-center gap-1 transition-colors"
@@ -60,11 +71,15 @@ export default function TodoItem({
           )}
         </div>
 
-        {todo.image_url && (
+        {imageUrl && !imgError && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={todo.image_url}
+            src={imageUrl}
             alt=""
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
             className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-gray-200"
+            onError={() => setImgError(true)}
           />
         )}
 
@@ -84,12 +99,16 @@ export default function TodoItem({
       </div>
 
       {/* Expanded image */}
-      {todo.image_url && imageExpanded && (
+      {imageUrl && imageExpanded && !expandedImgError && (
         <div className="px-4 pb-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={todo.image_url}
+            src={imageUrl}
             alt="Todo attachment"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
             className="w-full max-h-64 object-cover rounded-lg border border-gray-200"
+            onError={() => setExpandedImgError(true)}
           />
         </div>
       )}

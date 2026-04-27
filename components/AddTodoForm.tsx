@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function AddTodoForm({ onAdd }: { onAdd: (title: string, file?: File) => void }) {
   const [title, setTitle] = useState('');
@@ -9,8 +9,21 @@ export default function AddTodoForm({ onAdd }: { onAdd: (title: string, file?: F
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Clean up object URL on unmount or when it changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
+    // Revoke old URL before setting new one
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setSelectedFile(file);
     if (file) {
       const url = URL.createObjectURL(file);
@@ -21,6 +34,9 @@ export default function AddTodoForm({ onAdd }: { onAdd: (title: string, file?: F
   }
 
   function removeFile() {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) {
@@ -34,6 +50,7 @@ export default function AddTodoForm({ onAdd }: { onAdd: (title: string, file?: F
     if (!trimmed) return;
     onAdd(trimmed, selectedFile || undefined);
     setTitle('');
+    // Don't revoke here — the form preview is gone anyway
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) {
@@ -87,8 +104,9 @@ export default function AddTodoForm({ onAdd }: { onAdd: (title: string, file?: F
       </div>
 
       {/* Image preview */}
-      {previewUrl && (
+      {previewUrl && selectedFile && (
         <div className="relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Preview"
