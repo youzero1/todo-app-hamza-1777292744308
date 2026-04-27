@@ -3,4 +3,5 @@ export interface Todo {
   title: string;
   completed: boolean;
   created_at: string;
+  image_url?: string | null;
 }

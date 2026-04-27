@@ -22,6 +22,34 @@ export default function TodoList() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
   }
 
+  /* ---------- upload image ---------- */
+  async function uploadImage(file: File): Promise<string | null> {
+    if (!supabase) return null;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('todo-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError.message);
+      setError(`Image upload failed: ${uploadError.message}`);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('todo-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
   /* ---------- fetch ---------- */
   const fetchTodos = useCallback(async () => {
     if (!supabase) {
@@ -66,23 +94,41 @@ export default function TodoList() {
   }, [todos, usingLocal]);
 
   /* ---------- add ---------- */
-  async function addTodo(title: string) {
+  async function addTodo(title: string, file?: File) {
     setError(null);
 
     if (usingLocal || !supabase) {
+      let localImageUrl: string | null = null;
+      if (file) {
+        localImageUrl = URL.createObjectURL(file);
+      }
       const newTodo: Todo = {
         id: localId(),
         title,
         completed: false,
         created_at: new Date().toISOString(),
+        image_url: localImageUrl,
       };
       setTodos((prev) => [newTodo, ...prev]);
       return;
     }
 
+    let imageUrl: string | null = null;
+    if (file) {
+      imageUrl = await uploadImage(file);
+    }
+
+    const insertData: { title: string; completed: boolean; image_url?: string } = {
+      title,
+      completed: false,
+    };
+    if (imageUrl) {
+      insertData.image_url = imageUrl;
+    }
+
     const { data, error: insertError } = await supabase
       .from('todos')
-      .insert([{ title, completed: false }])
+      .insert([insertData])
       .select()
       .single();
 
