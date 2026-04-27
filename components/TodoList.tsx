@@ -137,6 +137,28 @@ export default function TodoList() {
     setTodos((prev) => prev.filter((t) => t.id !== id));
   }
 
+  /* ---------- clear completed ---------- */
+  async function clearCompleted() {
+    setError(null);
+    const completedIds = todos.filter(t => t.completed).map(t => t.id);
+    if (completedIds.length === 0) return;
+
+    if (usingLocal || !supabase) {
+      setTodos((prev) => prev.filter((t) => !t.completed));
+      return;
+    }
+
+    for (const id of completedIds) {
+      const { error: deleteError } = await supabase.from('todos').delete().eq('id', id);
+      if (deleteError) {
+        setError(deleteError.message);
+        return;
+      }
+    }
+
+    setTodos((prev) => prev.filter((t) => !t.completed));
+  }
+
   /* ---------- filter ---------- */
   const filtered = todos.filter((t) => {
     if (filter === 'active') return !t.completed;
@@ -145,12 +167,14 @@ export default function TodoList() {
   });
 
   const activeCount = todos.filter((t) => !t.completed).length;
+  const completedCount = todos.filter((t) => t.completed).length;
 
   /* ---------- render ---------- */
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="w-10 h-10 rounded-xl todo-gradient animate-spin shadow-lg shadow-indigo-500/30" style={{ animationDuration: '0.8s' }} />
+        <p className="text-sm text-gray-400 mt-4 font-medium">Loading todos...</p>
       </div>
     );
   }
@@ -160,58 +184,92 @@ export default function TodoList() {
       <AddTodoForm onAdd={addTodo} />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2">
+        <div className="flex items-center gap-3 bg-red-50/80 backdrop-blur border border-red-200 text-red-600 text-sm rounded-2xl px-5 py-3">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {error}
         </div>
       )}
 
       {usingLocal && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg px-4 py-2">
+        <div className="flex items-center gap-3 bg-amber-50/80 backdrop-blur border border-amber-200 text-amber-700 text-xs rounded-2xl px-5 py-3">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           Supabase is not connected. Todos are stored in your browser&apos;s local storage.
         </div>
       )}
 
+      {/* Stats bar */}
+      {todos.length > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="flex-1 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
+              <span className="text-xs font-medium text-gray-500">{activeCount} active</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+              <span className="text-xs font-medium text-gray-500">{completedCount} done</span>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="flex-1 h-1.5 bg-gray-200/60 rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out"
+              style={{ width: `${todos.length > 0 ? (completedCount / todos.length) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+      <div className="flex gap-1 glass-card rounded-2xl p-1.5 border border-white/60 shadow-sm">
         {(['all', 'active', 'completed'] as FilterType[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl capitalize transition-all duration-300 ${
               filter === f
-                ? 'bg-white text-gray-800 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'todo-gradient text-white shadow-md shadow-indigo-500/20'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
             }`}
           >
             {f}
+            {f === 'all' && ` (${todos.length})`}
+            {f === 'active' && ` (${activeCount})`}
+            {f === 'completed' && ` (${completedCount})`}
           </button>
         ))}
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <svg
-            className="mx-auto h-12 w-12 mb-3 text-gray-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-            />
-          </svg>
-          <p className="text-sm">
+        <div className="text-center py-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100/80 mb-4">
+            <svg
+              className="h-8 w-8 text-gray-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-400">
             {filter === 'all'
               ? 'No todos yet. Add one above!'
               : `No ${filter} todos.`}
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {filtered.map((todo) => (
             <TodoItem key={todo.id} todo={todo} onToggle={toggleTodo} onDelete={deleteTodo} />
           ))}
@@ -219,12 +277,17 @@ export default function TodoList() {
       )}
 
       {/* Footer */}
-      {todos.length > 0 && (
-        <div className="flex items-center justify-between text-xs text-gray-400 pt-2">
-          <span>
-            {activeCount} {activeCount === 1 ? 'item' : 'items'} left
-          </span>
-          <span>{todos.length} total</span>
+      {completedCount > 0 && (
+        <div className="flex items-center justify-center pt-2">
+          <button
+            onClick={clearCompleted}
+            className="text-xs font-medium text-gray-400 hover:text-red-400 transition-colors duration-200 flex items-center gap-1.5 px-4 py-2 rounded-xl hover:bg-red-50/50"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Clear completed
+          </button>
         </div>
       )}
     </div>
