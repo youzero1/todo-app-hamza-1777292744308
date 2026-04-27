@@ -12,13 +12,13 @@ export default function TodoItem({
   onDelete: (id: string) => void;
 }) {
   return (
-    <li className="todo-item-enter flex items-center gap-4 px-5 py-4 glass-card rounded-2xl border border-white/60 group hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-100 transition-all duration-300">
+    <li className="todo-item-enter flex items-center gap-4 px-5 py-4 dark-card rounded-2xl group hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-500/20 transition-all duration-300">
       <button
         onClick={() => onToggle(todo.id, !todo.completed)}
         className={`checkbox-ring flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
           todo.completed
             ? 'bg-gradient-to-br from-indigo-500 to-purple-500 border-transparent shadow-md shadow-indigo-500/30'
-            : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+            : 'border-slate-600 hover:border-indigo-400 hover:bg-indigo-500/10'
         }`}
         aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
       >
@@ -37,7 +37,7 @@ export default function TodoItem({
 
       <span
         className={`flex-1 text-sm font-medium transition-all duration-200 ${
-          todo.completed ? 'line-through text-gray-400 opacity-60' : 'text-gray-700'
+          todo.completed ? 'line-through text-slate-600 opacity-60' : 'text-slate-200'
         }`}
       >
         {todo.title}
@@ -45,7 +45,7 @@ export default function TodoItem({
 
       <button
         onClick={() => onDelete(todo.id)}
-        className="opacity-0 group-hover:opacity-100 transition-all duration-200 text-gray-300 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-50"
+        className="opacity-0 group-hover:opacity-100 transition-all duration-200 text-slate-600 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10"
         aria-label="Delete todo"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
